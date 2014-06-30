@@ -15,7 +15,7 @@ use Artax\ClientException as HTTPException,
  *
  * @package TorrentPHP\Client\Transmission
  */
-class AsyncClientTransport extends ClientTransport
+class AsyncClientTransport extends BlockingTransport
 {
     /**
      * @var LibeventReactor|NativeReactor
@@ -26,15 +26,15 @@ class AsyncClientTransport extends ClientTransport
      * @constructor
      *
      * @param AsyncClient                  $client  Artax Async HTTP Client
-     * @param Request                      $request Empty Request object
+     * @param Request                      $requestFactory Empty Request object
      * @param ReactorFactory               $reactor Factory for building the Alert Reactor
      * @param ConnectionConfig             $config  Configuration object used to connect over rpc
      */
-    public function __construct(AsyncClient $client, Request $request, ReactorFactory $reactor, ConnectionConfig $config)
+    public function __construct(AsyncClient $client, Request $requestFactory, ReactorFactory $reactor, ConnectionConfig $config)
     {
         $this->connectionArgs = $config->getArgs();
         $this->reactor        = $reactor->select();
-        $this->request        = $request;
+        $this->request        = $requestFactory;
         $this->client         = $client;
     }
 

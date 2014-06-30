@@ -5,10 +5,10 @@ namespace TorrentPHP;
 /**
  * Class ClientAdapter
  *
- * This class decorates (wraps) the ClientTransport object. It is used to turn any json into valid Torrent objects.
+ * This class decorates (wraps) the BlockingClient object. It is used to turn any json into valid Torrent objects.
  *
- * Methods defined in here can override those in ClientTransport and modify the output (for example - into Torrents).
- * Methods not defined in here are forwarded to the ClientTransport, if they exist.
+ * Methods defined in here can override those in BlockingClient and modify the output (for example - into Torrents).
+ * Methods not defined in here are forwarded to the BlockingClient, if they exist.
  *
  * To write your own client adapter, create a class that extends this class, and implement your own client-specific
  * decoration methods that override your client transport methods.
@@ -20,7 +20,7 @@ namespace TorrentPHP;
 abstract class ClientAdapter
 {
     /**
-     * @var ClientTransport
+     * @var BlockingClient
      */
     protected $transport;
 
@@ -37,11 +37,11 @@ abstract class ClientAdapter
     /**
      * @constructor
      *
-     * @param ClientTransport $transport
+     * @param BlockingClient $transport
      * @param TorrentFactory  $torrentFactory
      * @param FileFactory     $fileFactory
      */
-    public function __construct(ClientTransport $transport, TorrentFactory $torrentFactory, FileFactory $fileFactory)
+    public function __construct(BlockingClient $transport, TorrentFactory $torrentFactory, FileFactory $fileFactory)
     {
         $this->transport = $transport;
         $this->torrentFactory = $torrentFactory;

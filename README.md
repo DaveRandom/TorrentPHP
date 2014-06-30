@@ -24,7 +24,7 @@ Overview
 
 This library isn't particularly complex. It performs the following to give you an array of `Torrent` objects, in this order:
 
-**`ClientTransport`**
+**`BlockingClient`**
 - **Retrieves the data from your client**. In the case of Transmission and Deluge, this is done via JSON-RPC calls over the HTTP protocol.
 
 **`ClientAdapter`**
@@ -58,13 +58,13 @@ Instead of using cURL to make the RPC requests, we're using [Artax](https://gith
     $client = new Artax\Client;
     $config = new Artax\Request;
 
-Now, to give you JSON, use the `ClientTransport` object:
+Now, to give you JSON, use the `BlockingClient` object:
 
-    use TorrentPHP\Client\Transmission\ClientTransport;
+    use TorrentPHP\Client\Transmission\BlockingClient;
 
-    $transport = new ClientTransport($client, $request, $config);
+    $transport = new BlockingClient($client, $request, $config);
 
-Here you can run any of the methods defined in the `ClientTransport` interface, like:
+Here you can run any of the methods defined in the `BlockingClient` interface, like:
 
     $transport->getTorrents();
     $transport->addTorrent('http://urlToTorrentFile.torrent');
@@ -102,7 +102,7 @@ Code Example
     require_once __DIR__ . "/vendor/autoload.php";
 
     use TorrentPHP\Client\Transmission\ConnectionConfig,
-        TorrentPHP\Client\Transmission\ClientTransport,
+        TorrentPHP\Client\Transmission\BlockingClient,
         TorrentPHP\Client\Transmission\ClientAdapter,
         TorrentPHP\TorrentFactory,
         TorrentPHP\FileFactory;
@@ -122,7 +122,7 @@ Code Example
     ));
 
     // Create the transport that returns json
-    $transport = new ClientTransport($client, $request, $config);
+    $transport = new BlockingClient($client, $request, $config);
 
     // Create the adapter that returns Torrent objects
     $adapter = new ClientAdapter($transport, new TorrentFactory, new FileFactory);
@@ -149,7 +149,7 @@ Torrent Clients
 Extension
 ====
 
-You can add support for your own client by creating a new client directory in `src/Client/<ClientName>`, and adding a `ClientAdapter`, `ClientTransport` and `ConnectionConfig`. They don't have to talk over RPC however as how the implementation handles it is separate from the rest of the application.
+You can add support for your own client by creating a new client directory in `src/Client/<ClientName>`, and adding a `ClientAdapter`, `BlockingClient` and `ConnectionConfig`. They don't have to talk over RPC however as how the implementation handles it is separate from the rest of the application.
 
 Make sure you use the correct namespaces and implement / extend the correct classes. See the `src/Transmission` and `src/Deluge` directories for examples.
 

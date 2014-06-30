@@ -2,7 +2,7 @@
 
 namespace TorrentPHP\Client\Deluge;
 
-use TorrentPHP\ClientTransport as ClientTransportInterface,
+use TorrentPHP\BlockingClient as ClientTransportInterface,
     Artax\ClientException as HTTPException,
     TorrentPHP\ClientException,
     TorrentPHP\Torrent,
@@ -11,7 +11,7 @@ use TorrentPHP\ClientTransport as ClientTransportInterface,
     Artax\Client;
 
 /**
- * Class ClientTransport
+ * Class BlockingClient
  *
  * @package TorrentPHP\Client\Deluge
  *
