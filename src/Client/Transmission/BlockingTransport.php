@@ -18,45 +18,43 @@ class BlockingTransport
     /**
      * @var Client
      */
-    protected $client;
+    private $client;
 
     /**
      * @var RequestFactory
      */
-    protected $requestFactory;
+    private $requestFactory;
 
     /**
      * @var string
      */
-    protected $rpcUri;
+    private $uri;
 
     /**
-     * @var string
+     * @var string[]
      */
-    protected $authHeader;
-
-    /**
-     * @var string
-     */
-    protected $sessionId;
+    private $requestHeaders = [
+        'Content-Type' => 'application/json; charset=utf-8',
+    ];
 
     /**
      * @constructor
      *
-     * @param Client           $client         Artax HTTP Client
-     * @param RequestFactory   $requestFactory Factory which makes Request objects
-     * @param ConnectionConfig $config         Configuration object used to connect over rpc
+     * @param Client         $client         Artax HTTP Client
+     * @param RequestFactory $requestFactory Factory which makes Request objects
+     * @param string         $uri            URI for RPC requests
+     * @param string         $user           RPC service username
+     * @param string         $pass           RPC service username
      */
-    public function __construct(Client $client, RequestFactory $requestFactory, ConnectionConfig $config)
+    public function __construct(Client $client, RequestFactory $requestFactory, $uri, $user = null, $pass = null)
     {
-        $this->connectionArgs = $config->getArgs();
-        $this->$requestFactory = $requestFactory;
+        $this->requestFactory = $requestFactory;
         $this->client = $client;
+        $this->uri = $uri;
 
-        $args = $config->getArgs();
-        $this->rpcUri = sprintf('%s:%s/transmission/rpc', $args['host'], $args['port']);
-        $authString = sprintf('%s:%s', $args['username'], $args['password']);
-        $this->authHeader = sprintf('Basic %s', base64_encode($authString));
+        if ($user || $pass) {
+            $this->requestHeaders['Authorization'] = 'Basic ' . base64_encode($user . ':' . $pass);
+        }
     }
 
     /**
@@ -68,13 +66,9 @@ class BlockingTransport
      */
     private function sendRequest($body)
     {
-        $request = $this->requestFactory->createRequest($this->rpcUri, 'POST');
+        $request = $this->requestFactory->createRequest($this->uri, 'POST');
 
-        $request->setAllHeaders([
-            'Content-Type'              => 'application/json; charset=utf-8',
-            'Authorization'             => $this->authHeader,
-            'X-Transmission-Session-Id' => $this->sessionId,
-        ]);
+        $request->setAllHeaders($this->requestHeaders);
         $request->setBody($body);
 
         try {
@@ -126,7 +120,7 @@ class BlockingTransport
                 throw new ClientException("Response does not contain an X-Transmission-Session-Id header");
             }
 
-            $this->sessionId = $response->getHeader('X-Transmission-Session-Id');
+            $this->requestHeaders['X-Transmission-Session-Id'] = $response->getHeader('X-Transmission-Session-Id');
             $response = $this->sendRequest($requestBody);
         }
 

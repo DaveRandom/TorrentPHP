@@ -3,74 +3,53 @@
 namespace TorrentPHP;
 
 /**
- * Interface BlockingClient
+ * Interface AsyncClient
  *
- * If you want to add support for your own torrent client of choice, you need to create a BlockingClient that sends
- * commands to your client. For transmission and vuze, these are RPC calls over the HTTP protocol, but your client may
- * require command-line calls, for example.
+ * Non-blocking version of BlockingClient.
  *
- * The BlockingClient is responsible for the actual data retrieval from your client of choice. The responsibility of
- * adapting the responses to create individual Torrent objects by wrapping this class is the ClientAdapter.
+ * All callbacks will pass the return value to the first argument of the callback, or bool(false) on error
  *
  * @package TorrentPHP
  */
-interface BlockingClient
+interface AsyncClient
 {
     /**
      * Get a list of all torrents from the client
      *
+     * @param callable $callback Callback to receive the result data
      * @param array $ids Optional array of id / hashStrings to get data for specific torrents
-     *
-     * @throws ClientException  When the client does not return expected 'success' output
-     *
-     * @return string A JSON string of data
      */
-    public function getTorrents(array $ids = []);
+    public function getTorrents(callable $callback, array $ids = []);
 
     /**
      * Add a torrent to the client
      *
      * @param string $path The local or remote path to the .torrent file
-     *
-     * @throws ClientException When the client does not return expected 'success' output
-     *
-     * @return string A JSON string of response data
+     * @param callable $callback Callback to receive the result data
      */
-    public function addTorrent($path);
+    public function addTorrent($path, callable $callback);
 
     /**
      * Start a torrent
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
-     * @throws \InvalidArgumentException When both input arguments are null
-     * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
-     * @return string A JSON string of response data
+     * @param callable $callback Callback to receive the result data
      */
-    public function startTorrent($torrent);
+    public function startTorrent($torrent, callable $callback);
 
     /**
      * Pause a torrent
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
-     * @throws \InvalidArgumentException When both input arguments are null
-     * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
-     * @return string A JSON string of response data
+     * @param callable $callback Callback to receive the result data
      */
-    public function pauseTorrent($torrent);
+    public function pauseTorrent($torrent, callable $callback);
 
     /**
      * Delete a torrent - be aware this relates to deleting the torrent file and all files associated with it
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
-     * @throws \InvalidArgumentException When both input arguments are null
-     * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
-     * @return string A JSON string of response data
+     * @param callable $callback Callback to receive the result data
      */
-    public function deleteTorrent($torrent);
+    public function deleteTorrent($torrent, callable $callback);
 } 
