@@ -11,11 +11,11 @@ use Artax\ClientException as HTTPException,
     Artax\Request;
 
 /**
- * Class AsyncClientTransport
+ * Class AsyncTransport
  *
  * @package TorrentPHP\Client\Transmission
  */
-class AsyncClientTransport extends BlockingTransport
+class AsyncTransport
 {
     /**
      * @var LibeventReactor|NativeReactor

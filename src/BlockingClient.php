@@ -31,10 +31,8 @@ interface BlockingClient
      * Add a torrent to the client
      *
      * @param string $path The local or remote path to the .torrent file
-     *
      * @throws ClientException When the client does not return expected 'success' output
-     *
-     * @return string A JSON string of response data
+     * @return Torrent
      */
     public function addTorrent($path);
 
