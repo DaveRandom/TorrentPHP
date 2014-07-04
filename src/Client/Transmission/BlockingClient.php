@@ -17,16 +17,16 @@ class BlockingClient implements BlockingClientInterface
     const METHOD_PAUSE  = 'torrent-stop';
 
     /**
-     * @var BlockingClient
+     * @var BlockingTransport
      */
     private $clientTransport;
 
     /**
      * Constructor
      *
-     * @param BlockingClient $clientTransport
+     * @param BlockingTransport $clientTransport
      */
-    public function __construct(BlockingClient $clientTransport)
+    public function __construct(BlockingTransport $clientTransport)
     {
         $this->clientTransport = $clientTransport;
     }
@@ -57,7 +57,7 @@ class BlockingClient implements BlockingClientInterface
         $method = self::METHOD_GET;
         $arguments = $ids ? ['ids' => $ids] : [];
 
-        return $this->performRPCRequest($method, $arguments)->getBody();
+        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
 
     /**
@@ -68,7 +68,7 @@ class BlockingClient implements BlockingClientInterface
         $method = self::METHOD_ADD;
         $arguments = array('filename' => $path);
 
-        return $this->performRPCRequest($method, $arguments)->getBody();
+        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
 
     /**
@@ -77,11 +77,9 @@ class BlockingClient implements BlockingClientInterface
     public function startTorrent($torrent)
     {
         $method = self::METHOD_START;
+        $arguments = ['ids' => $this->getTorrentId($torrent)];
 
-        $torrentId = $this->getTorrentId($torrent);
-        $arguments = array_merge($this->connectionArgs, ['ids' => $torrentId]);
-
-        return $this->performRPCRequest($method, $arguments)->getBody();
+        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
 
     /**
@@ -90,11 +88,9 @@ class BlockingClient implements BlockingClientInterface
     public function pauseTorrent($torrent)
     {
         $method = self::METHOD_PAUSE;
+        $arguments = ['ids' => $this->getTorrentId($torrent)];
 
-        $torrentId = $this->getTorrentId($torrent);
-        $arguments = array_merge($this->connectionArgs, ['ids' => $torrentId]);
-
-        return $this->performRPCRequest($method, $arguments)->getBody();
+        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
 
     /**
@@ -103,11 +99,9 @@ class BlockingClient implements BlockingClientInterface
     public function deleteTorrent($torrent)
     {
         $method = self::METHOD_DELETE;
+        $arguments = ['ids' => $this->getTorrentId($torrent)];
 
-        $torrentId = $this->getTorrentId($torrent);
-        $arguments = array_merge($this->connectionArgs, ['ids' => $torrentId]);
-
-        return $this->performRPCRequest($method, $arguments)->getBody();
+        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
 
 }

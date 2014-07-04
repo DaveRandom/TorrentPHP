@@ -4,7 +4,6 @@ namespace TorrentPHP\Client\Transmission;
 
 use TorrentPHP\ClientException,
     Artax\Response,
-    Artax\Request,
     Artax\Client;
 
 /**
@@ -60,7 +59,14 @@ class BlockingTransport
         $this->authHeader = sprintf('Basic %s', base64_encode($authString));
     }
 
-    private function createRPCRequest($body)
+    /**
+     * Send a request to the RPC URI using the specified request body
+     *
+     * @param string $body
+     * @return Response
+     * @throws ClientException
+     */
+    private function sendRequest($body)
     {
         $request = $this->requestFactory->createRequest($this->rpcUri, 'POST');
 
@@ -71,7 +77,34 @@ class BlockingTransport
         ]);
         $request->setBody($body);
 
-        return $body;
+        try {
+            return $this->client->request($request);
+        } catch (\Artax\ClientException $e) {
+            throw new ClientException('HTTP request failed: ' . $e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Create a JSON string for a raw request body
+     *
+     * @param string $method
+     * @param array $arguments
+     * @return string
+     */
+    private function createJSONBody($method, $arguments)
+    {
+        return json_encode([
+            'method'    => $method,
+            'arguments' => array_merge(
+                [
+                    'fields' => [
+                        'hashString', 'name', 'sizeWhenDone', 'status', 'rateDownload', 'rateUpload',
+                        'uploadedEver', 'files', 'errorString',
+                    ],
+                ],
+                $arguments
+            )
+        ]);
     }
 
     /**
@@ -79,63 +112,22 @@ class BlockingTransport
      *
      * @param string $method    The rpc method to call
      * @param array  $arguments Associative array of rpc method arguments to send in the header (not auth arguments)
-     *
      * @throws ClientException When something goes wrong with the HTTP call
-     *
      * @return Response The HTTP response containing headers / body ready for validation / parsing
      */
     public function performRPCRequest($method, array $arguments)
     {
-        $requestBody = json_encode([
-            'method'    => $method,
-            'arguments' => array_merge(
-                [
-                    'fields' => [
-                        'hashString', 'name', 'sizeWhenDone', 'status', 'rateDownload', 'rateUpload',
-                        'uploadedEver', 'files', 'errorString',
-                    ],
-                ],
-                $arguments
-            )
-        ]);
+        $requestBody = $this->createJSONBody($method, $arguments);
 
-        try {
-            $request = $this->createRPCRequest($requestBody);
-            $response = $this->client->request($request);
-        } catch (\Artax\ClientException $e) {
-            throw new ClientException('HTTP request failed: ' . $e->getMessage(), $e->getCode(), $e);
-        }
+        $response = $this->sendRequest($requestBody);
 
-        if ($response->getStatus() !== 200) {
-            if ($response->getStatus() === 409) {
-                if (!$response->hasHeader('X-Transmission-Session-Id')) {
-                    throw new ClientException("Response does not contain an X-Transmission-Session-Id header");
-                }
+        if ($response->getStatus() === 409) {
+            if (!$response->hasHeader('X-Transmission-Session-Id')) {
+                throw new ClientException("Response does not contain an X-Transmission-Session-Id header");
             }
-        }
 
-        $sessionId = $response->getHeader('X-Transmission-Session-Id');
-        $requestBody = json_encode([
-            'method'    => $method,
-            'arguments' => array_merge(
-                [
-                    'fields' => [
-                        'hashString', 'name', 'sizeWhenDone', 'status', 'rateDownload', 'rateUpload',
-                        'uploadedEver', 'files', 'errorString',
-                    ],
-                ],
-                $arguments
-            )
-        ]);
-
-        $request->setMethod('POST');
-        $request->setHeader('X-Transmission-Session-Id', $sessionId);
-        $request->setBody($requestBody);
-
-        try {
-            $response = $this->client->request($request);
-        } catch (\Artax\ClientException $e) {
-            throw new ClientException('HTTP request failed: ' . $e->getMessage(), $e->getCode(), $e);
+            $this->sessionId = $response->getHeader('X-Transmission-Session-Id');
+            $response = $this->sendRequest($requestBody);
         }
 
         if ($response->getStatus() !== 200) {
