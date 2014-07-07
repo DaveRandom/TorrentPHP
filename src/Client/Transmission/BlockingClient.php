@@ -2,20 +2,10 @@
 
 namespace TorrentPHP\Client\Transmission;
 
-use TorrentPHP\BlockingClient as BlockingClientInterface,
-    TorrentPHP\Torrent;
+use TorrentPHP\BlockingClient as BlockingClientInterface;
 
-class BlockingClient implements BlockingClientInterface
+class BlockingClient extends Client implements BlockingClientInterface
 {
-    /**
-     * RPC method names
-     */
-    const METHOD_ADD    = 'torrent-add';
-    const METHOD_GET    = 'torrent-get';
-    const METHOD_DELETE = 'torrent-remove';
-    const METHOD_START  = 'torrent-start';
-    const METHOD_PAUSE  = 'torrent-stop';
-
     /**
      * @var BlockingTransport
      */
@@ -29,24 +19,6 @@ class BlockingClient implements BlockingClientInterface
     public function __construct(BlockingTransport $clientTransport)
     {
         $this->clientTransport = $clientTransport;
-    }
-
-    /**
-     * Get a normalised scalar torrent identifier
-     *
-     * @param Torrent|int|string $torrent
-     * @return int|string
-     * @throws \InvalidArgumentException
-     */
-    private function getTorrentId($torrent)
-    {
-        if ($torrent instanceof Torrent) {
-            return $torrent->getHashString();
-        } else if (is_string($torrent) || is_int($torrent)) {
-            return $torrent;
-        }
-
-        throw new \InvalidArgumentException("Unable to extract torrent ID from supplied data: " . (string)$torrent);
     }
 
     /**
@@ -68,7 +40,10 @@ class BlockingClient implements BlockingClientInterface
         $method = self::METHOD_ADD;
         $arguments = array('filename' => $path);
 
-        return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
+        $response = $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
+        $hash = $response->arguments->{'torrent-added'}->hashString;
+
+        return $this->getTorrents([$hash])[0];
     }
 
     /**
@@ -103,5 +78,4 @@ class BlockingClient implements BlockingClientInterface
 
         return $this->clientTransport->performRPCRequest($method, $arguments)->getBody();
     }
-
 }

@@ -20,10 +20,8 @@ interface BlockingClient
      * Get a list of all torrents from the client
      *
      * @param array $ids Optional array of id / hashStrings to get data for specific torrents
-     *
      * @throws ClientException  When the client does not return expected 'success' output
-     *
-     * @return string A JSON string of data
+     * @return Torrent[]
      */
     public function getTorrents(array $ids = []);
 
@@ -40,10 +38,8 @@ interface BlockingClient
      * Start a torrent
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
      * @throws \InvalidArgumentException When both input arguments are null
      * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
      * @return string A JSON string of response data
      */
     public function startTorrent($torrent);
@@ -52,10 +48,8 @@ interface BlockingClient
      * Pause a torrent
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
      * @throws \InvalidArgumentException When both input arguments are null
      * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
      * @return string A JSON string of response data
      */
     public function pauseTorrent($torrent);
@@ -64,10 +58,8 @@ interface BlockingClient
      * Delete a torrent - be aware this relates to deleting the torrent file and all files associated with it
      *
      * @param Torrent|int $torrent A Torrent object or torrent ID
-     *
      * @throws \InvalidArgumentException When both input arguments are null
      * @throws ClientException           When the client does not return expected output to say that this action succeeded
-     *
      * @return string A JSON string of response data
      */
     public function deleteTorrent($torrent);

@@ -13,29 +13,12 @@ use TorrentPHP\ClientException,
  *
  * @see <https://trac.transmissionbt.com/browser/trunk/extras/rpc-spec.txt>
  */
-class BlockingTransport
+class BlockingTransport extends Transport
 {
     /**
      * @var Client
      */
     private $client;
-
-    /**
-     * @var RequestFactory
-     */
-    private $requestFactory;
-
-    /**
-     * @var string
-     */
-    private $uri;
-
-    /**
-     * @var string[]
-     */
-    private $requestHeaders = [
-        'Content-Type' => 'application/json; charset=utf-8',
-    ];
 
     /**
      * @constructor
@@ -48,13 +31,8 @@ class BlockingTransport
      */
     public function __construct(Client $client, RequestFactory $requestFactory, $uri, $user = null, $pass = null)
     {
-        $this->requestFactory = $requestFactory;
+        parent::__construct($requestFactory, $uri, $user, $pass);
         $this->client = $client;
-        $this->uri = $uri;
-
-        if ($user || $pass) {
-            $this->requestHeaders['Authorization'] = 'Basic ' . base64_encode($user . ':' . $pass);
-        }
     }
 
     /**
@@ -79,35 +57,12 @@ class BlockingTransport
     }
 
     /**
-     * Create a JSON string for a raw request body
-     *
-     * @param string $method
-     * @param array $arguments
-     * @return string
-     */
-    private function createJSONBody($method, $arguments)
-    {
-        return json_encode([
-            'method'    => $method,
-            'arguments' => array_merge(
-                [
-                    'fields' => [
-                        'hashString', 'name', 'sizeWhenDone', 'status', 'rateDownload', 'rateUpload',
-                        'uploadedEver', 'files', 'errorString',
-                    ],
-                ],
-                $arguments
-            )
-        ]);
-    }
-
-    /**
-     * Helper method to facilitate json rpc requests using the Artax client
+     * Send a JSON RPC request to transmission and get the response JSON
      *
      * @param string $method    The rpc method to call
      * @param array  $arguments Associative array of rpc method arguments to send in the header (not auth arguments)
      * @throws ClientException When something goes wrong with the HTTP call
-     * @return Response The HTTP response containing headers / body ready for validation / parsing
+     * @return mixed The decoded JSON response body
      */
     public function performRPCRequest($method, array $arguments)
     {
@@ -125,22 +80,16 @@ class BlockingTransport
         }
 
         if ($response->getStatus() !== 200) {
-            throw new ClientException(sprintf(
-                '"%s" expected 200 response, got "%s" instead, reason: "%s"',
-                $method, $response->getStatus(), $response->getReason()
-            ));
+            throw new ClientException("Unexpected response: {$response->getStatus()}: {$response->getReason()}");
         }
 
-        $body = $response->getBody();
+        $result = json_decode($response->getBody());
 
-        json_decode($body);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new ClientException(sprintf(
-                '"%s" did not get back a JSON response body, got "%s" instead',
-                $method, print_r($response->getBody(), true)
-            ));
+        $errCode = json_last_error();
+        if ($errCode !== JSON_ERROR_NONE) {
+            throw new ClientException("Invalid JSON response, error code: {$errCode}");
         }
 
-        return $response;
+        return $result;
     }
 }
